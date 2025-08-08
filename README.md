@@ -5,6 +5,7 @@ A modern, responsive website for JIYER Environmental Technology Company built wi
 ## Features
 
 - **Company Introduction**: Detailed information about JIYER's mission, vision, and company statistics
+- **Products**: Complete product catalog with categories, images, and detailed information
 - **Contact Us**: Contact information
 - **Responsive Design**: Mobile-friendly interface
 - **Environmental Theme**: Green color palette reflecting the company's eco-friendly focus
@@ -69,6 +70,9 @@ jiyer_website/
 - `GET /` - Main page (served at http://localhost:8080)
 - `GET /api/company-info` - Company information
 - `GET /api/contact` - Contact information
+- `GET /api/products` - Get all products
+- `GET /api/products/<id>` - Get specific product details
+- `GET /api/categories` - Get product categories
 
 ## Admin Panel
 
@@ -76,6 +80,9 @@ jiyer_website/
 - `GET /manage` - Admin management panel (requires login)
 - `POST /update_company` - Update company information
 - `POST /update_contact` - Update contact information
+- `POST /add_product` - Add new product
+- `POST /update_product` - Update product information
+- `POST /delete_product` - Delete product
 
 **Admin Password**: `jiyer_admin`
 

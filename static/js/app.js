@@ -1,11 +1,11 @@
 const { useState, useEffect } = React;
 
 // Navigation Component
-const Navigation = ({ activePage, setActivePage }) => {
+const Navigation = ({ activePage, navigateTo }) => {
     return (
         <nav className="navbar">
             <div className="nav-container">
-                <a href="#" className="logo" onClick={() => setActivePage('home')}>
+                <a href="#" className="logo" onClick={(e) => { e.preventDefault(); navigateTo('home'); }}>
                     <img src="/static/images/logo.png" alt="JIYER" className="logo-img" />
                     JIYER
                 </a>
@@ -13,21 +13,21 @@ const Navigation = ({ activePage, setActivePage }) => {
                     <li><a 
                         href="#" 
                         className={activePage === 'home' ? 'active' : ''} 
-                        onClick={() => setActivePage('home')}
+                        onClick={(e) => { e.preventDefault(); navigateTo('home'); }}
                     >
                         Company Introduction
                     </a></li>
                     <li><a 
                         href="#" 
                         className={activePage === 'products' ? 'active' : ''} 
-                        onClick={() => setActivePage('products')}
+                        onClick={(e) => { e.preventDefault(); navigateTo('products'); }}
                     >
                         Products
                     </a></li>
                     <li><a 
                         href="#" 
                         className={activePage === 'contact' ? 'active' : ''} 
-                        onClick={() => setActivePage('contact')}
+                        onClick={(e) => { e.preventDefault(); navigateTo('contact'); }}
                     >
                         Contact Us
                     </a></li>
@@ -122,14 +122,101 @@ const HomePage = () => {
 };
 
 // Products Component
-const ProductsPage = () => {
+const ProductsPage = ({ navigateTo }) => {
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        Promise.all([
+            fetch('/api/products').then(res => res.json()),
+            fetch('/api/categories').then(res => res.json())
+        ]).then(([productsData, categoriesData]) => {
+            setProducts(productsData.products || []);
+            setCategories(categoriesData.categories || []);
+            setLoading(false);
+        }).catch(error => {
+            console.error('Error fetching data:', error);
+            setLoading(false);
+        });
+    }, []);
+
+    const filteredProducts = selectedCategory === 'all' 
+        ? products 
+        : products.filter(product => product.category === selectedCategory);
+
+    if (loading) {
+        return (
+            <div className="loading">
+                <div className="spinner"></div>
+            </div>
+        );
+    }
+
     return (
         <div className="main-content">
             <div className="hero">
                 <div className="container">
                     <h1>Our Products</h1>
-                    <p>Coming soon...</p>
+                    <p>Discover our innovative environmental technology solutions</p>
                 </div>
+            </div>
+
+            <div className="container">
+                {/* Category Filter */}
+                <div className="category-filter">
+                    <button 
+                        className={`filter-btn ${selectedCategory === 'all' ? 'active' : ''}`}
+                        onClick={() => setSelectedCategory('all')}
+                    >
+                        All Categories
+                    </button>
+                    {categories.map(category => (
+                        <button 
+                            key={category}
+                            className={`filter-btn ${selectedCategory === category ? 'active' : ''}`}
+                            onClick={() => setSelectedCategory(category)}
+                        >
+                            {category}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Products Grid */}
+                <div className="products-grid">
+                    {filteredProducts.map(product => (
+                        <div key={product.id} className="product-card">
+                            <div className="product-image">
+                                {product.images && product.images.length > 0 ? (
+                                    <img src={product.images[0]} alt={product.name} />
+                                ) : (
+                                    <div className="placeholder-image">
+                                        📦
+                                    </div>
+                                )}
+                            </div>
+                            <div className="product-content">
+                                <h3>{product.name}</h3>
+                                <p className="product-code">Code: {product.code}</p>
+                                <p className="product-category">{product.category}</p>
+                                <p className="product-description">{product.description}</p>
+                                <button 
+                                    className="btn"
+                                    onClick={() => navigateTo('product-detail', product.id)}
+                                >
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {filteredProducts.length === 0 && (
+                    <div className="no-products">
+                        <p>No products found in this category.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -242,18 +329,158 @@ const Footer = () => {
     );
 };
 
+// Product Detail Component
+const ProductDetailPage = ({ productId, navigateTo }) => {
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch(`/api/products/${productId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Product not found');
+                    window.location.href = '/';
+                    return;
+                }
+                setProduct(data);
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error('Error fetching product:', error);
+                window.location.href = '/';
+            });
+    }, [productId]);
+
+    if (loading) {
+        return (
+            <div className="loading">
+                <div className="spinner"></div>
+            </div>
+        );
+    }
+
+    if (!product) {
+        return <div>Product not found</div>;
+    }
+
+    return (
+        <div className="main-content">
+            <div className="hero">
+                <div className="container">
+                    <h1>{product.name}</h1>
+                    <p>{product.category} • Code: {product.code}</p>
+                </div>
+            </div>
+
+            <div className="container">
+                <div className="product-detail">
+                    {/* Product Images */}
+                    {product.images && product.images.length > 0 && (
+                        <div className="product-images">
+                            <div className="main-image">
+                                <img src={product.images[0]} alt={product.name} />
+                            </div>
+                            {product.images.length > 1 && (
+                                <div className="image-gallery">
+                                    {product.images.slice(1).map((image, index) => (
+                                        <img key={index} src={image} alt={`${product.name} ${index + 2}`} />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Product Information */}
+                    <div className="product-info">
+                        <h2>Product Details</h2>
+                        <div className="product-meta">
+                            <p><strong>Category:</strong> {product.category}</p>
+                            <p><strong>Product Code:</strong> {product.code}</p>
+                        </div>
+                        <div className="product-description">
+                            <h3>Description</h3>
+                            <p>{product.description}</p>
+                        </div>
+                        <button 
+                            className="btn"
+                            onClick={() => navigateTo('products')}
+                        >
+                            ← Back to Products
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Main App Component
 const App = () => {
     const [activePage, setActivePage] = useState('home');
+    const [productId, setProductId] = useState(null);
+
+    // Handle navigation and URL changes
+    useEffect(() => {
+        const handleNavigation = () => {
+            const path = window.location.pathname;
+            
+            // Check for product detail page
+            const productMatch = path.match(/^\/product\/(\d+)$/);
+            if (productMatch) {
+                setProductId(productMatch[1]);
+                setActivePage('product-detail');
+                return;
+            }
+            
+            // Check for other pages
+            if (path === '/') {
+                setActivePage('home');
+                setProductId(null);
+            } else if (path === '/products') {
+                setActivePage('products');
+                setProductId(null);
+            } else if (path === '/contact') {
+                setActivePage('contact');
+                setProductId(null);
+            }
+        };
+
+        // Initial navigation
+        handleNavigation();
+
+        // Listen for browser back/forward
+        window.addEventListener('popstate', handleNavigation);
+
+        return () => {
+            window.removeEventListener('popstate', handleNavigation);
+        };
+    }, []);
+
+    // Navigation function
+    const navigateTo = (page, productId = null) => {
+        setActivePage(page);
+        setProductId(productId);
+        
+        // Update URL
+        let url = '/';
+        if (page === 'products') url = '/products';
+        else if (page === 'contact') url = '/contact';
+        else if (page === 'product-detail') url = `/product/${productId}`;
+        
+        window.history.pushState({}, '', url);
+    };
 
     const renderPage = () => {
         switch (activePage) {
             case 'home':
                 return <HomePage />;
             case 'products':
-                return <ProductsPage />;
+                return <ProductsPage navigateTo={navigateTo} />;
             case 'contact':
                 return <ContactPage />;
+            case 'product-detail':
+                return <ProductDetailPage productId={productId} navigateTo={navigateTo} />;
             default:
                 return <HomePage />;
         }
@@ -261,7 +488,7 @@ const App = () => {
 
     return (
         <div>
-            <Navigation activePage={activePage} setActivePage={setActivePage} />
+            <Navigation activePage={activePage} navigateTo={navigateTo} />
             {renderPage()}
             <Footer />
         </div>
