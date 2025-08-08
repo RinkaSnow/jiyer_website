@@ -310,7 +310,8 @@ def manage_products():
     
     cursor.execute('''
         SELECT p.*, 
-               GROUP_CONCAT(pi.image_path) as images
+               GROUP_CONCAT(pi.image_path ORDER BY pi.is_primary DESC) as images,
+               GROUP_CONCAT(pi.is_primary ORDER BY pi.is_primary DESC) as primary_flags
         FROM products p
         LEFT JOIN product_images pi ON p.id = pi.product_id
         GROUP BY p.id
@@ -318,9 +319,13 @@ def manage_products():
     ''')
     products_data = cursor.fetchall()
     
+    # 获取分类数据
+    cursor.execute('SELECT DISTINCT category FROM products ORDER BY category')
+    categories = [row[0] for row in cursor.fetchall()]
+    
     conn.close()
     
-    return render_template('manage_products.html', products=products_data)
+    return render_template('manage_products.html', products=products_data, categories=categories)
 
 @app.route('/manage/contact')
 @login_required

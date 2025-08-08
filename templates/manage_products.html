@@ -267,6 +267,54 @@
             margin: 0.5rem 0;
         }
         
+        /* Filter and Search Styles */
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--lighter-green);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+        }
+        
+        .category-filter {
+            min-width: 200px;
+        }
+        
+        .category-filter select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--lighter-green);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--white);
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+        
+        .category-filter select:focus {
+            outline: none;
+            border-color: var(--primary-green);
+        }
+        
         .form-actions {
             display: flex;
             gap: 1rem;
@@ -293,7 +341,66 @@
             .form-actions {
                 flex-direction: column;
             }
+            
+            .filter-controls {
+                flex-direction: column;
+            }
+            
+            .search-box {
+                min-width: auto;
+            }
         }
+    </style>
+    
+    <script>
+        function filterProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const products = document.querySelectorAll('.product-item');
+            const noResults = document.getElementById('noResults');
+            const productsList = document.getElementById('productsList');
+            
+            let visibleCount = 0;
+            
+            products.forEach(product => {
+                const category = product.getAttribute('data-category');
+                const name = product.getAttribute('data-name');
+                const code = product.getAttribute('data-code');
+                const description = product.getAttribute('data-description');
+                
+                // 检查分类筛选
+                const categoryMatch = categoryFilter === 'all' || category === categoryFilter;
+                
+                // 检查搜索词
+                const searchMatch = searchTerm === '' || 
+                    name.includes(searchTerm) || 
+                    code.includes(searchTerm) || 
+                    description.includes(searchTerm);
+                
+                // 显示或隐藏产品
+                if (categoryMatch && searchMatch) {
+                    product.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    product.style.display = 'none';
+                }
+            });
+            
+            // 显示或隐藏"无结果"消息
+            if (visibleCount === 0) {
+                noResults.style.display = 'block';
+                productsList.style.display = 'none';
+            } else {
+                noResults.style.display = 'none';
+                productsList.style.display = 'grid';
+            }
+        }
+        
+        // 页面加载时初始化筛选
+        window.addEventListener('load', function() {
+            filterProducts();
+        });
+    </script>
     </style>
 
 </head>
@@ -359,10 +466,26 @@
         <!-- Existing Products -->
         <div class="admin-section">
             <h2>📋 Existing Products</h2>
+            
+            <!-- Filter and Search Controls -->
+            <div class="filter-controls">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search products by name, code, or description..." onkeyup="filterProducts()">
+                </div>
+                <div class="category-filter">
+                    <select id="categoryFilter" onchange="filterProducts()">
+                        <option value="all">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
             {% if products %}
-                <div class="products-list">
+                <div class="products-list" id="productsList">
                     {% for product in products %}
-                    <div class="product-item">
+                    <div class="product-item" data-category="{{ product[1] }}" data-name="{{ product[2]|lower }}" data-code="{{ product[3]|lower }}" data-description="{{ product[4]|lower }}">
                         <div class="product-info">
                             <h4>{{ product[2] }}</h4>
                             <p><strong>Code:</strong> {{ product[3] }}</p>
@@ -395,6 +518,11 @@
                         </div>
                     </div>
                     {% endfor %}
+                </div>
+                
+                <div id="noResults" class="empty-state" style="display: none;">
+                    <p>🔍 No products found matching your search criteria.</p>
+                    <p>Try adjusting your search terms or category filter.</p>
                 </div>
             {% else %}
                 <div class="empty-state">
