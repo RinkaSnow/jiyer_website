@@ -42,7 +42,7 @@ A modern, responsive website for JIYER Environmental Technology Company built wi
    ```
 
 4. **Access the website**
-   Open your browser and navigate to `http://localhost:8080`
+   Open your browser and navigate to `http://localhost:80`
 
 ## Project Structure
 
@@ -67,7 +67,7 @@ jiyer_website/
 
 ## API Endpoints
 
-- `GET /` - Main page (served at http://localhost:8080)
+- `GET /` - Main page (served at http://localhost:80)
 - `GET /api/company-info` - Company information
 - `GET /api/contact` - Contact information
 - `GET /api/products` - Get all products

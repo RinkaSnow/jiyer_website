@@ -54,8 +54,8 @@ fi
 echo -e "${GREEN}✅ All dependencies are installed!${NC}"
 echo "=================================================="
 echo -e "${BLUE}🚀 Starting Flask server...${NC}"
-echo -e "${GREEN}📱 Backend API will be available at: http://localhost:8080${NC}"
-echo -e "${GREEN}🌐 Frontend will be available at: http://localhost:3000${NC}"
+echo -e "${GREEN}📱 Backend API will be available at: http://localhost:80${NC}"
+echo -e "${GREEN}🌐 Frontend will be available at: http://localhost:80${NC}"
 echo -e "${YELLOW}🛑 Press Ctrl+C to stop all servers${NC}"
 echo "=================================================="
 
@@ -79,7 +79,7 @@ sleep 3
 
 # Check if Flask started successfully
 if [ "$SKIP_HEALTH_CHECK" = false ]; then
-    if ! curl -s http://localhost:8080 > /dev/null; then
+    if ! curl -s http://localhost:80 > /dev/null; then
         echo -e "${RED}❌ Flask backend failed to start${NC}"
         exit 1
     fi
@@ -88,15 +88,15 @@ else
     echo -e "${YELLOW}⚠️  Skipping health check (curl not available)${NC}"
 fi
 
-echo -e "${GREEN}✅ Flask backend is running on port 8080${NC}"
+echo -e "${GREEN}✅ Flask backend is running on port 80${NC}"
 
 # Start React development server (if you want to use a separate React dev server)
 # For now, we'll just serve the static files through Flask
-echo -e "${BLUE}🌐 Frontend is served through Flask at http://localhost:8080${NC}"
+echo -e "${BLUE}🌐 Frontend is served through Flask at http://localhost:80${NC}"
 
 # Keep the script running
 echo -e "${GREEN}🎉 All servers are running!${NC}"
-echo -e "${GREEN}📱 Open your browser and go to: http://localhost:8080${NC}"
+echo -e "${GREEN}📱 Open your browser and go to: http://localhost:80${NC}"
 
 # Wait for user to stop
 wait
