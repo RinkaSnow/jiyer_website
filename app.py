@@ -176,8 +176,8 @@ def get_products():
     # 获取所有产品，按分类分组
     cursor.execute('''
         SELECT p.*, 
-               GROUP_CONCAT(pi.image_path) as images,
-               SUM(CASE WHEN pi.is_primary = 1 THEN 1 ELSE 0 END) as has_primary
+               GROUP_CONCAT(pi.image_path ORDER BY pi.is_primary DESC) as images,
+               GROUP_CONCAT(pi.is_primary ORDER BY pi.is_primary DESC) as primary_flags
         FROM products p
         LEFT JOIN product_images pi ON p.id = pi.product_id
         GROUP BY p.id
@@ -186,13 +186,25 @@ def get_products():
     
     products = []
     for row in cursor.fetchall():
+        images = row[7].split(',') if row[7] else []
+        primary_flags = row[8].split(',') if row[8] else []
+        
+        # 确保主图排在第一位
+        image_data = []
+        for i, img in enumerate(images):
+            is_primary = primary_flags[i] == '1' if i < len(primary_flags) else False
+            image_data.append({'path': img, 'is_primary': is_primary})
+        
+        # 按主图排序
+        image_data.sort(key=lambda x: not x['is_primary'])
+        
         product = {
             'id': row[0],
             'category': row[1],
             'name': row[2],
             'code': row[3],
             'description': row[4],
-            'images': row[7].split(',') if row[7] else []
+            'images': [img['path'] for img in image_data]
         }
         products.append(product)
     
@@ -546,6 +558,29 @@ def delete_product_image():
     
     product_id = request.form.get('product_id')
     return redirect(url_for('edit_product', product_id=product_id))
+
+@app.route('/set_primary_image', methods=['POST'])
+@login_required
+def set_primary_image():
+    try:
+        product_id = request.form.get('product_id')
+        image_path = request.form.get('image_path')
+        
+        conn = sqlite3.connect('jiyer.db')
+        cursor = conn.cursor()
+        
+        # 先将所有图片设置为非主图
+        cursor.execute('UPDATE product_images SET is_primary = 0 WHERE product_id = ?', (product_id,))
+        
+        # 将选中的图片设置为主图
+        cursor.execute('UPDATE product_images SET is_primary = 1 WHERE product_id = ? AND image_path = ?', (product_id, image_path))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == '__main__':
     init_db()  # 初始化数据库

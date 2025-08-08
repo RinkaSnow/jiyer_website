@@ -180,7 +180,8 @@
         .image-item img {
             width: 100%;
             height: 150px;
-            object-fit: cover;
+            object-fit: contain;
+            background: var(--lighter-green);
         }
         
         .image-item.primary {
@@ -198,6 +199,43 @@
             border-radius: 4px;
             font-size: 0.7rem;
             font-weight: 600;
+        }
+        
+        .image-item {
+            cursor: pointer;
+        }
+        
+        .image-item img {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .image-item img:hover {
+            transform: scale(1.05);
+        }
+        
+        .primary-indicator {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: var(--primary-green);
+            color: var(--white);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: none;
+        }
+        
+        .primary-indicator.show {
+            display: block;
+        }
+        
+        .image-help {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            font-style: italic;
         }
         
         .delete-image-btn {
@@ -316,15 +354,17 @@
         <div class="admin-section">
             <div class="current-images">
                 <h3>🖼️ Current Product Images</h3>
+                <p class="image-help">Click on an image to set it as primary, or use the delete button to remove it.</p>
                 <div class="image-grid">
                     {% for image in product[7].split(',') %}
-                        <div class="image-item">
-                            <img src="{{ image }}" alt="Product image">
+                        <div class="image-item" data-image="{{ image }}">
+                            <img src="{{ image }}" alt="Product image" onclick="setPrimaryImage('{{ image }}')">
                             <form method="POST" action="/delete_product_image" class="delete-image-form">
                                 <input type="hidden" name="product_id" value="{{ product[0] }}">
                                 <input type="hidden" name="image_path" value="{{ image }}">
                                 <button type="submit" class="delete-image-btn" onclick="return confirm('Delete this image?')">×</button>
                             </form>
+                            <div class="primary-indicator" id="primary-{{ image|replace('/', '_')|replace('.', '_') }}"></div>
                         </div>
                     {% endfor %}
                 </div>
@@ -332,5 +372,81 @@
         </div>
         {% endif %}
     </div>
+    
+    <script>
+        // 获取当前主图信息
+        let currentPrimaryImage = null;
+        
+        // 页面加载时获取当前主图
+        window.addEventListener('load', function() {
+            fetch('/api/products/{{ product[0] }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.images && data.images.length > 0) {
+                        currentPrimaryImage = data.images[0];
+                        updatePrimaryIndicators();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching product data:', error);
+                });
+        });
+        
+        function setPrimaryImage(imagePath) {
+            const formData = new FormData();
+            formData.append('product_id', '{{ product[0] }}');
+            formData.append('image_path', imagePath);
+            
+            fetch('/set_primary_image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentPrimaryImage = imagePath;
+                    updatePrimaryIndicators();
+                    // 显示成功消息
+                    showMessage('Primary image updated successfully!', 'success');
+                } else {
+                    showMessage('Error updating primary image: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Error updating primary image', 'error');
+            });
+        }
+        
+        function updatePrimaryIndicators() {
+            // 隐藏所有主图指示器
+            document.querySelectorAll('.primary-indicator').forEach(indicator => {
+                indicator.classList.remove('show');
+            });
+            
+            // 显示当前主图的指示器
+            if (currentPrimaryImage) {
+                const indicatorId = 'primary-' + currentPrimaryImage.replace(/\//g, '_').replace(/\./g, '_');
+                const indicator = document.getElementById(indicatorId);
+                if (indicator) {
+                    indicator.classList.add('show');
+                }
+            }
+        }
+        
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flash-message flash-${type}`;
+            messageDiv.textContent = message;
+            
+            const container = document.querySelector('.admin-container');
+            container.insertBefore(messageDiv, container.firstChild);
+            
+            // 3秒后自动移除消息
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
