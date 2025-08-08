@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JIYER Admin - Product Management</title>
+    <title>JIYER Admin - Edit Product</title>
     <link rel="icon" type="image/png" href="/static/images/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/styles.css">
     <style>
         .admin-container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 2rem;
         }
@@ -135,22 +135,6 @@
             transform: translateY(-2px);
         }
         
-        .btn-danger {
-            background: #f44336;
-            color: var(--white);
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-danger:hover {
-            background: #d32f2f;
-            transform: translateY(-2px);
-        }
-        
         .flash-message {
             padding: 1rem;
             border-radius: 8px;
@@ -169,107 +153,80 @@
             border: 1px solid #f44336;
         }
         
-        /* Product Management Styles */
-        .products-list {
-            display: grid;
-            gap: 1rem;
+        /* Product Images Management */
+        .current-images {
+            margin-top: 2rem;
         }
         
-        .product-item {
-            background: var(--white);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--lighter-green);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        
-        .product-info h4 {
-            margin: 0 0 0.5rem 0;
+        .current-images h3 {
             color: var(--dark-green);
-            font-size: 1.2rem;
+            margin-bottom: 1rem;
         }
         
-        .product-info p {
-            margin: 0.2rem 0;
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-        
-        .product-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-shrink: 0;
-        }
-        
-        .product-images-preview {
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
             margin-top: 1rem;
         }
         
-        .image-thumbnails {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-        
-        .image-container {
+        .image-item {
             position: relative;
-            display: inline-block;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--lighter-green);
         }
         
-        .image-container img {
-            width: 60px;
-            height: 60px;
+        .image-item img {
+            width: 100%;
+            height: 150px;
             object-fit: cover;
-            border-radius: 4px;
-            border: 1px solid var(--lighter-green);
-            transition: transform 0.2s ease;
         }
         
-        .image-container img:hover {
-            transform: scale(1.1);
+        .image-item.primary {
+            border-color: var(--primary-green);
         }
         
-        .delete-image-form {
+        .image-item.primary::after {
+            content: "Primary";
             position: absolute;
-            top: -5px;
-            right: -5px;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: var(--primary-green);
+            color: var(--white);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
         }
         
         .delete-image-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
             background: #f44336;
             color: var(--white);
             border: none;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s ease;
         }
         
         .delete-image-btn:hover {
             background: #d32f2f;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: var(--gray);
-        }
-        
-        .empty-state p {
-            margin: 0.5rem 0;
+            transform: scale(1.1);
         }
         
         .form-actions {
             display: flex;
             gap: 1rem;
-            margin-top: 1rem;
+            margin-top: 2rem;
         }
         
         .form-actions button {
@@ -283,28 +240,25 @@
                 text-align: center;
             }
             
-            .product-item {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-            
             .form-actions {
                 flex-direction: column;
             }
+            
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
         }
     </style>
-
 </head>
 <body>
     <div class="admin-container">
         <div class="admin-header">
             <h1>
                 <img src="/static/images/logo.png" alt="JIYER" style="height: 32px; width: auto; margin-right: 8px; vertical-align: middle; background: transparent;">
-                Product Management
+                Edit Product: {{ product[2] }}
             </h1>
             <div>
-                <a href="/manage" class="back-btn">← Back to Dashboard</a>
+                <a href="/manage/products" class="back-btn">← Back to Products</a>
                 <a href="/logout" class="logout-btn">Logout</a>
             </div>
         </div>
@@ -318,90 +272,65 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
-        <!-- Add New Product Form -->
+        
         <div class="admin-section">
-            <h2>➕ Add New Product</h2>
-            <form method="POST" action="/add_product" enctype="multipart/form-data">
+            <h2>✏️ Edit Product Information</h2>
+            <form method="POST" action="/update_product" enctype="multipart/form-data">
+                <input type="hidden" name="product_id" value="{{ product[0] }}">
+                
                 <div class="form-group">
                     <label for="category">Category</label>
-                    <input type="text" id="category" name="category" required>
+                    <input type="text" id="category" name="category" value="{{ product[1] }}" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="name">Product Name</label>
-                    <input type="text" id="name" name="name" required>
+                    <input type="text" id="name" name="name" value="{{ product[2] }}" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="code">Product Code</label>
-                    <input type="text" id="code" name="code" required>
+                    <input type="text" id="code" name="code" value="{{ product[3] }}" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" name="description" rows="4" required></textarea>
+                    <textarea id="description" name="description" rows="6" required>{{ product[4] }}</textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="images">Product Images</label>
+                    <label for="images">Add New Images (Optional)</label>
                     <input type="file" id="images" name="images" multiple accept="image/*">
-                    <small>First image will be set as primary</small>
+                    <small>New images will be added to existing ones. First image will be set as primary if no primary image exists.</small>
                 </div>
                 
-                <button type="submit" class="submit-btn">➕ Add Product</button>
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn">💾 Update Product</button>
+                    <a href="/manage/products" class="btn-secondary">❌ Cancel</a>
+                </div>
             </form>
         </div>
 
-
-
-        <!-- Existing Products -->
+        <!-- Current Images Management -->
+        {% if product[7] %}
         <div class="admin-section">
-            <h2>📋 Existing Products</h2>
-            {% if products %}
-                <div class="products-list">
-                    {% for product in products %}
-                    <div class="product-item">
-                        <div class="product-info">
-                            <h4>{{ product[2] }}</h4>
-                            <p><strong>Code:</strong> {{ product[3] }}</p>
-                            <p><strong>Category:</strong> {{ product[1] }}</p>
-                            <p>{{ product[4][:150] }}{% if product[4]|length > 150 %}...{% endif %}</p>
-                            {% if product[7] %}
-                                <div class="product-images-preview">
-                                    <p><strong>Images:</strong></p>
-                                    <div class="image-thumbnails">
-                                        {% for image in product[7].split(',') %}
-                                            <div class="image-container">
-                                                <img src="{{ image }}" alt="Product image">
-                                                <form method="POST" action="/delete_product_image" class="delete-image-form">
-                                                    <input type="hidden" name="product_id" value="{{ product[0] }}">
-                                                    <input type="hidden" name="image_path" value="{{ image }}">
-                                                    <button type="submit" class="delete-image-btn" onclick="return confirm('Delete this image?')">×</button>
-                                                </form>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="product-actions">
-                            <a href="/edit_product/{{ product[0] }}" class="btn-secondary" style="text-decoration: none; display: inline-block;">✏️ Edit</a>
-                            <form method="POST" action="/delete_product" style="display: inline;">
+            <div class="current-images">
+                <h3>🖼️ Current Product Images</h3>
+                <div class="image-grid">
+                    {% for image in product[7].split(',') %}
+                        <div class="image-item">
+                            <img src="{{ image }}" alt="Product image">
+                            <form method="POST" action="/delete_product_image" class="delete-image-form">
                                 <input type="hidden" name="product_id" value="{{ product[0] }}">
-                                <button type="submit" class="btn-danger" onclick="return confirm('Are you sure you want to delete this product?')">🗑️ Delete</button>
+                                <input type="hidden" name="image_path" value="{{ image }}">
+                                <button type="submit" class="delete-image-btn" onclick="return confirm('Delete this image?')">×</button>
                             </form>
                         </div>
-                    </div>
                     {% endfor %}
                 </div>
-            {% else %}
-                <div class="empty-state">
-                    <p>📦 No products added yet.</p>
-                    <p>Add your first product using the form above!</p>
-                </div>
-            {% endif %}
+            </div>
         </div>
+        {% endif %}
     </div>
 </body>
 </html>

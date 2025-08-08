@@ -324,6 +324,31 @@ def manage_contact():
     
     return render_template('manage_contact.html', contact=contact_data)
 
+@app.route('/edit_product/<int:product_id>')
+@login_required
+def edit_product(product_id):
+    # 获取产品数据
+    conn = sqlite3.connect('jiyer.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT p.*, 
+               GROUP_CONCAT(pi.image_path) as images
+        FROM products p
+        LEFT JOIN product_images pi ON p.id = pi.product_id
+        WHERE p.id = ?
+        GROUP BY p.id
+    ''', (product_id,))
+    
+    product_data = cursor.fetchone()
+    conn.close()
+    
+    if not product_data:
+        flash('Product not found!', 'error')
+        return redirect(url_for('manage_products'))
+    
+    return render_template('edit_product.html', product=product_data)
+
 @app.route('/update_company', methods=['POST'])
 @login_required
 def update_company():
@@ -462,7 +487,8 @@ def update_product():
     except Exception as e:
         flash(f'Error updating product: {str(e)}', 'error')
     
-    return redirect(url_for('manage_products'))
+    product_id = request.form.get('product_id')
+    return redirect(url_for('edit_product', product_id=product_id))
 
 @app.route('/delete_product', methods=['POST'])
 @login_required
@@ -518,7 +544,8 @@ def delete_product_image():
     except Exception as e:
         flash(f'Error deleting image: {str(e)}', 'error')
     
-    return redirect(url_for('manage_products'))
+    product_id = request.form.get('product_id')
+    return redirect(url_for('edit_product', product_id=product_id))
 
 if __name__ == '__main__':
     init_db()  # 初始化数据库
