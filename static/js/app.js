@@ -293,6 +293,55 @@ const ContactPage = () => {
 
 // Footer Component
 const Footer = () => {
+    const [footerData, setFooterData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/api/footer')
+            .then(response => response.json())
+            .then(data => {
+                setFooterData(data);
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error('Error fetching footer data:', error);
+                setLoading(false);
+            });
+    }, []);
+
+    if (loading) {
+        return (
+            <footer className="footer">
+                <div className="footer-content">
+                    <div className="footer-section">
+                        <h3>
+                            <img src="/static/images/logo.png" alt="JIYER" className="footer-logo" />
+                            JIYER
+                        </h3>
+                        <p>Leading environmental technology solutions for a sustainable future.</p>
+                    </div>
+                    <div className="footer-section">
+                        <h3>Quick Links</h3>
+                        <a href="#home">Company Introduction</a>
+                        <a href="#products">Products</a>
+                        <a href="#contact">Contact Us</a>
+                    </div>
+                    <div className="footer-section">
+                        <h3>Contact Info</h3>
+                        <p>Loading...</p>
+                    </div>
+                    <div className="footer-section">
+                        <h3>Follow Us</h3>
+                        <p>Loading...</p>
+                    </div>
+                </div>
+                <div className="footer-bottom">
+                    <p>&copy; 2025 JIYER. All rights reserved. | Building a greener future together.</p>
+                </div>
+            </footer>
+        );
+    }
+
     return (
         <footer className="footer">
             <div className="footer-content">
@@ -311,15 +360,15 @@ const Footer = () => {
                 </div>
                 <div className="footer-section">
                     <h3>Contact Info</h3>
-                    <p>123 Green Street, Shenzhen, China</p>
-                    <p>+86 123 4567 8900</p>
-                    <p>info@jiyer.com</p>
+                    <p>{footerData?.address || 'Address not available'}</p>
+                    <p>{footerData?.phone || 'Phone not available'}</p>
+                    <p>{footerData?.email || 'Email not available'}</p>
                 </div>
                 <div className="footer-section">
                     <h3>Follow Us</h3>
-                    <a href="#" target="_blank">LinkedIn</a>
-                    <a href="#" target="_blank">Twitter</a>
-                    <a href="#" target="_blank">Facebook</a>
+                    <a href={footerData?.linkedin || '#'} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                    <a href={footerData?.twitter || '#'} target="_blank" rel="noopener noreferrer">Twitter</a>
+                    <a href={footerData?.facebook || '#'} target="_blank" rel="noopener noreferrer">Facebook</a>
                 </div>
             </div>
             <div className="footer-bottom">

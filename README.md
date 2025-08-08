@@ -73,6 +73,7 @@ jiyer_website/
 - `GET /api/products` - Get all products
 - `GET /api/products/<id>` - Get specific product details
 - `GET /api/categories` - Get product categories
+- `GET /api/footer` - Get footer contact and social media information
 
 ## Admin Panel
 

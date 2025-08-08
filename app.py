@@ -176,8 +176,8 @@ def get_products():
     # 获取所有产品，按分类分组
     cursor.execute('''
         SELECT p.*, 
-               GROUP_CONCAT(pi.image_path ORDER BY pi.is_primary DESC) as images,
-               GROUP_CONCAT(pi.is_primary ORDER BY pi.is_primary DESC) as primary_flags
+               GROUP_CONCAT(pi.image_path) as images,
+               GROUP_CONCAT(pi.is_primary) as primary_flags
         FROM products p
         LEFT JOIN product_images pi ON p.id = pi.product_id
         GROUP BY p.id
@@ -265,6 +265,35 @@ def get_categories():
     conn.close()
     return jsonify({'categories': categories})
 
+@app.route('/api/footer')
+def get_footer_data():
+    conn = sqlite3.connect('jiyer.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT * FROM contact_info WHERE id = 1')
+    contact_data = cursor.fetchone()
+    
+    conn.close()
+    
+    if contact_data:
+        return jsonify({
+            'address': contact_data[1],
+            'phone': contact_data[2],
+            'email': contact_data[3],
+            'linkedin': contact_data[5] or '#',
+            'twitter': contact_data[6] or '#',
+            'facebook': contact_data[7] or '#'
+        })
+    
+    return jsonify({
+        'address': 'Address not available',
+        'phone': 'Phone not available',
+        'email': 'Email not available',
+        'linkedin': '#',
+        'twitter': '#',
+        'facebook': '#'
+    })
+
 # 管理后台路由
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -310,8 +339,8 @@ def manage_products():
     
     cursor.execute('''
         SELECT p.*, 
-               GROUP_CONCAT(pi.image_path ORDER BY pi.is_primary DESC) as images,
-               GROUP_CONCAT(pi.is_primary ORDER BY pi.is_primary DESC) as primary_flags
+               GROUP_CONCAT(pi.image_path) as images,
+               GROUP_CONCAT(pi.is_primary) as primary_flags
         FROM products p
         LEFT JOIN product_images pi ON p.id = pi.product_id
         GROUP BY p.id
